@@ -1,0 +1,24 @@
+{
+  "name": "bdr-limbs",
+  "version": "0.0.1",
+  "description": "BDR Local Inventory Management and Backup System",
+  "main": "server.js",
+  "dependencies": {
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wcr3/BDR-LIMBS.git"
+  },
+  "author": "wcr3",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wcr3/BDR-LIMBS/issues"
+  },
+  "homepage": "https://github.com/wcr3/BDR-LIMBS#readme"
+}
