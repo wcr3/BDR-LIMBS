@@ -25,6 +25,46 @@ const http_content_types = {
  */
 module.exports.site = '';
 
+/**
+ * Routes pages requested from the server
+ * @param {import('http').ServerResponse} res - The server response
+ * @param {string} f_path - The url path of the page
+ * @returns {?import('fs').ReadStream} A ReadStream for the page HTML file, or for the 404 page if not found
+ */
+function route_page(res, f_path) {
+    var ret;
+    try {
+        fs.accessSync(path.join(__dirname, f_path), fs.constants.R_OK);
+        ret = fs.createReadStream(path.join(__dirname, f_path, 'index.html')); // temporary.  will likely be changed.
+        res.writeHead(200, {'Content-Type': 'text/html'});
+    } catch (err) {
+        console.log(err);
+        ret = fs.createReadStream(path.join(__dirname, '404.html'));
+        res.writeHead(404, err, {'Content-Type': 'text/html'});
+    }
+    return ret;
+}
+
+/**
+ * Routes static files requested from the server
+ * @param {import('http').ServerResponse} res - The server response
+ * @param {string} f_path - The path to the static file
+ * @returns {?import('fs').ReadStream} A ReadStream for the given file, or null if it does not exist.
+ */
+function route_static(res, f_path) {
+    var ret;
+    try {
+        fs.accessSync(path.join(__dirname, f_path), fs.constants.R_OK);
+        ret = fs.createReadStream(path.join(__dirname, f_path));
+        res.writeHead(200, {'Content-Type': http_content_types[path.extname(f_path)]});
+    } catch (err) {
+        console.log(err);
+        ret = null;
+        res.writeHead(404, err);
+    }
+    return ret;
+}
+
 /** 
  * Top-level routing function for HTTP Server
  * @param {import('http').IncomingMessage} req - The request made to the server
@@ -33,12 +73,12 @@ module.exports.site = '';
 module.exports.route = function(req, res) {
     var req_url = new URL(req.url, 'http://' + req.headers.host);
     console.log('Request made for URL: ' + req.url + '. This has basename ' + path.basename(req_url.pathname) + ' and extension ' + path.extname(req_url.pathname));
-    var loc = module.exports.site +  req_url.pathname;
-    if (loc === 'LIMBS/') {
-        loc += '/index.html';
+    var loc = path.join(module.exports.site, req_url.pathname);
+    var f_rstream = path.extname(loc) === "" ? route_page(res, loc) : route_static(res, loc);
+    if (f_rstream) {
+        f_rstream.pipe(res);
     }
-    var ext = path.extname(loc);
-    res.writeHead(200, {'Content-Type': http_content_types[ext]});
-    var f_rstream = fs.createReadStream(__dirname + '/' + loc);
-    f_rstream.pipe(res);
+    else {
+        res.end();
+    }
 }
