@@ -26,16 +26,16 @@ const http_content_types = {
 module.exports.site = '';
 
 /**
- * Routes pages requested from the server
+ * Routes urls requested from the server
  * @param {import('http').ServerResponse} res - The server response
- * @param {string} f_path - The url path of the page
+ * @param {string} r_url - The url path requested
  * @returns {?import('fs').ReadStream} A ReadStream for the page HTML file, or for the 404 page if not found
  */
-function route_page(res, f_path) {
+function route_url(res, r_url) {
     var ret;
     try {
-        fs.accessSync(path.join(__dirname, f_path), fs.constants.R_OK);
-        ret = fs.createReadStream(path.join(__dirname, f_path, 'index.html')); // temporary.  will likely be changed.
+        fs.accessSync(path.join(__dirname, r_url), fs.constants.R_OK);
+        ret = fs.createReadStream(path.join(__dirname, r_url, 'index.html')); // temporary.  will likely be changed.
         res.writeHead(200, {'Content-Type': 'text/html'});
     } catch (err) {
         console.log(err);
@@ -74,7 +74,7 @@ module.exports.route = function(req, res) {
     var req_url = new URL(req.url, 'http://' + req.headers.host);
     console.log('Request made for URL: ' + req.url + '. This has basename ' + path.basename(req_url.pathname) + ' and extension ' + path.extname(req_url.pathname));
     var loc = path.join(module.exports.site, req_url.pathname);
-    var f_rstream = path.extname(loc) === "" ? route_page(res, loc) : route_static(res, loc);
+    var f_rstream = path.extname(loc) === "" ? route_url(res, loc) : route_static(res, loc);
     if (f_rstream) {
         f_rstream.pipe(res);
     }
