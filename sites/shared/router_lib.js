@@ -3,6 +3,7 @@
  * @module shared/router_lib
  */
 
+ /** Collection of bit values corresponding to HTTP Request Methods */
 const HTTP_REQ_METHOD = module.exports.HTTP_REQ_METHOD = {
     'GET': 1<<0,
     'HEAD': 1<<1,
