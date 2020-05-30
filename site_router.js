@@ -44,7 +44,7 @@ class RouteResult {
 /** Class holding routing information for various 'sites.' */
 class SiteRouter {
     /**
-     * Top-level routing function for HTTP Server
+     * Top-level routing function
      * @param {import('http').IncomingMessage} req - The request made to the server
      * @param {import('http').ServerResponse} res - The server response
      */
