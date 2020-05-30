@@ -7,6 +7,17 @@ var url = require('url');
 var fs = require('fs');
 var path = require('path');
 
+/**
+ * Collection of HTTP Content-Types (MIME Types) based on file extension
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types|MDN Web Docs}
+ * @constant {Object.<string, string>}
+ */
+const http_content_types = {
+    '.html': 'text/html',
+    '.ico': 'image/x-icon',
+    '.js': 'text/javascript',
+};
+
 /** 
  * Class holding result of route with header data
  * @typedef {Object} RouteResult
@@ -33,6 +44,15 @@ class RouteResult {
 /** Class holding routing information for various 'sites.' */
 class SiteRouter {
     /**
+     * Top-level routing function for HTTP Server
+     * @param {import('http').IncomingMessage} req - The request made to the server
+     * @param {import('http').ServerResponse} res - The server response
+     */
+    route(req, res) {
+        route_basic(req, res);
+    }
+
+    /**
      * Build a SiteRouter from a directory of sites
      * @param {string} site_path - The path to the directory of sites
      */
@@ -40,11 +60,13 @@ class SiteRouter {
         this.path = site_path;
         var dir = null;
         try {
-            dir = fs.opendirSync(this.path);
+            dir = fs.opendirSync(path.join(__dirname, this.path));
+            this.site_routes = {};
             var site;
             while (((site = dir.readSync()) != null) && (site.name !== 'shared')) {
                 if (site.isDirectory()) {
-                    this.site_routes[site.name] = require(path.join(this.path, site.name, 'router.js'));
+                    var mod_path = path.join(__dirname, this.path, site.name, 'router');
+                    this.site_routes[site.name] = require(path.join(__dirname, this.path, site.name, 'router'));
                 }
             }
             dir.closeSync();
@@ -53,7 +75,7 @@ class SiteRouter {
             if (dir) {
                 dir.closeSync();
             }
-            this.route = (req, res) => {return send_fstream(res, server_error(500, 'Failed to load sites at path' + this.path))};
+            this.route = (req, res) => {return send_file(res, server_error(500, 'Failed to load sites at path' + this.path))};
         }
     }
 }
@@ -84,17 +106,6 @@ function server_error(status, status_message) {
         }
     };
 }
-
-/**
- * Collection of HTTP Content-Types (MIME Types) based on file extension
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types|MDN Web Docs}
- * @constant {Object.<string, string>}
- */
-const http_content_types = {
-    '.html': 'text/html',
-    '.ico': 'image/x-icon',
-    '.js': 'text/javascript',
-};
 
 /**
  * Routes urls requested from the server
@@ -141,7 +152,7 @@ function route_static(res, f_path) {
  * @param {import('http').IncomingMessage} req - The request made to the server
  * @param {import('http').ServerResponse} res - The server response
  */
-function route(req, res) {
+function route_basic(req, res) {
     var req_url = new URL(req.url, 'http://' + req.headers.host);
     console.log('Request made for URL: ' + req.url + '. This has basename ' + path.basename(req_url.pathname) + ' and extension ' + path.extname(req_url.pathname));
     var loc = path.join(module.exports.site, req_url.pathname);
