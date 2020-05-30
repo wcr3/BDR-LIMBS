@@ -1,6 +1,6 @@
 var http = require('http');
 
-var router = require('./router');
+var site_router = require('./site_router');
+var router = new site_router('./sites');
 
-router.site = 'LIMBS';
 http.createServer(router.route).listen(8080);
