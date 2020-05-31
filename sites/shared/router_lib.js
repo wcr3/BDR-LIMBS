@@ -3,6 +3,7 @@
  * @module shared/router_lib
  */
 var fs = require('fs');
+var path = require('path');
 
 
  /** 
@@ -32,21 +33,29 @@ const HTTP_CONT_TYPE = module.exports.HTTP_CONT_TYPE = {
 };
 
 /**
- * Routes static files requested from the server
+ * Writes success to the header of res and pipes f_stream to the client
  * @param {import('http').ServerResponse} res - The server response
- * @param {string} f_path - The path to the static file
+ * @param {import('fs').ReadStream} f_stream - The ReadStream for the file to send
+ * @param {string} cont_type - The HTTP content type of the file
+ */
+module.exports.send_success = function(res, f_stream, cont_type) {
+    res.writeHead(200, {'Content-Type': cont_type});
+    f_stream.pipe(res);
+};
+
+/**
+ * Gets a ReadStream to the file at f_path
+ * @param {string} f_path - The absolute path to the static file
  * @returns {?import('fs').ReadStream} A ReadStream for the given file, or null if it does not exist.
  */
-modul.exports.route_file = function(res, f_path) {
+module.exports.get_file = function(f_path) {
     var ret;
     try {
-        fs.accessSync(path.join(__dirname, f_path), fs.constants.R_OK);
-        ret = fs.createReadStream(path.join(__dirname, f_path));
-        res.writeHead(200, {'Content-Type': HTTP_CONT_TYPE[path.extname(f_path)]});
+        fs.accessSync(f_path, fs.constants.R_OK);
+        ret = fs.createReadStream(f_path);
     } catch (err) {
         console.log(err);
         ret = null;
-        res.writeHead(404, err);
     }
     return ret;
-}
+};
