@@ -6,14 +6,15 @@
         <script src="index.js"></script>
     </head>
 
-    <body>
+    <body onload="get_data('items', build_table, 'item_tbl')">
         <h1>LIMBS</h1>
         <h2>Add a Part, Tool, Subsytem, or Component</h2>
-        <form id="sub_frm" action="/p_sub">
+        <form id="item_sub_frm" action="/submit/item">
             Name: <input type="text" name="name"><br>
             Location: <input type="text" name="loc">
         </form>
         <h2>Add a Cabinet, Shelf, Table, or Floor</h2>
         <h2>View and Search the Database</h2>
+        <div id="item_tbl"></div> 
     </body>
 </html>

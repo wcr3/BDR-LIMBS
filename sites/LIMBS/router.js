@@ -5,6 +5,7 @@
 var url = require('url');
 var path = require('path');
 
+
 var router_lib = require('../shared/router_lib');
 
 /**
@@ -21,6 +22,11 @@ module.exports = function(req, res) {
             router_lib.send_success(res, f_stream, router_lib.HTTP_CONT_TYPE['.html']);
             return true;
         }
+    }
+    else if ((req_url.pathname.split('/')[1]) === 'retrieve') {
+        res.writeHead(200, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify([{yeet: 1, tweet: 2}, {yeet: 3, tweet: 4}]));
+        return true;
     }
     else if (path.extname(req_url.pathname) !== '') {
         if ((f_stream = router_lib.get_file(path.join(__dirname, 'site', req_url.pathname))) || 
