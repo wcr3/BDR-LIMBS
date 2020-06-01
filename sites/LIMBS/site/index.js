@@ -5,14 +5,17 @@
  * @param {...*} funcArgs - The rest of the arguments for the function
  */
 function get_data(table, func, ...funcArgs) {
-    console.log("Called get_data()");
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            func(JSON.parse(xhttp.responseText), funcArgs);
+            if (this.getResponseHeader("Content-Type") === 'application/json') {
+                func(JSON.parse(this.responseText), funcArgs);
+            }
+            else {
+                console.log("Server data request failed: " + this.statusText);
+            }
         }
     };
-    console.log(window.location.protocol + '//' + window.location.host + "/retrieve/" + table);
     xhttp.open("GET", window.location.protocol + '//' + window.location.host + "/retrieve/" + table);
     xhttp.send();
 }
@@ -23,9 +26,6 @@ function get_data(table, func, ...funcArgs) {
  * @param {string} id - The id of the <div>
  */
 function build_table(objs, id) {
-    var keys = Object.keys(objs[0]);
-    //console.log(objs[0].yeet);
-    //document.getElementById(id).innerHTML = "<p>Ran Function build_table()</p>"
     var tbl_str = "<table style='width:100%'><tr>";
     Object.keys(objs[0]).forEach((el) => {
         tbl_str += "<th>" + el + "</th>";
