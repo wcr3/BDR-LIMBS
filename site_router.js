@@ -61,7 +61,7 @@ class SiteRouter {
         var req_url = new URL(req.url, 'http://' + req.headers.host);
         console.log('Request made for URL: ' + req.url + '. This has basename ' + path.basename(req_url.pathname) + ' and extension ' + path.extname(req_url.pathname));
         var site_name = ((req_url.hostname.split('.'))[0]).toLowerCase();
-        if (site_name !== 'localhost') {
+        if (site_name !== 'localhost') {  // TO BE CHANGED
             if (this.site_routes[site_name]) {
                 if (!this.site_routes[site_name](req, res)) {
                     send_file(res, server_error(404, 'Site ' + site_name + ' failed to route.'));
@@ -131,6 +131,7 @@ function server_error(status, status_message) {
     );
 }
 
+/* The following three functions need to be removed */
 /**
  * Routes urls requested from the server
  * @param {import('http').ServerResponse} res - The server response
@@ -188,5 +189,6 @@ function route_basic(req, res) {
         res.end();
     }
 }
+
 
 module.exports = SiteRouter;

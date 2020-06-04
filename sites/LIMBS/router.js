@@ -14,7 +14,7 @@ var con = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "password", // I am a master of security
-    database: "sakila"
+    //database: "sakila"
 });
 con.connect(function(err) {
     if (err) {
@@ -46,9 +46,7 @@ module.exports = function(req, res) {
             res.end();
             return true;
         }
-        // var test = 10;
-        // var queryCompleteEmitter = new events.EventEmitter();
-        con.query('SELECT * FROM actor', function(err, results) {
+        con.query('SELECT * FROM sakila.actor', function(err, results) {
             if (err) {
                 console.log(err);
                 res.writeHead(500, "SQL Query Failed.");
@@ -59,10 +57,6 @@ module.exports = function(req, res) {
                 res.end(JSON.stringify(results));
             }
         });
-        // while(!query_completed);  // This should really be implemented with an EventListener
-        // res.writeHead(200, {'Content-Tpye': 'application/json'});
-        // res.end(JSON.stringify(query_data));
-        // query_completed = false;
         return true;
     }
     else if (path.extname(req_url.pathname) !== '') {
