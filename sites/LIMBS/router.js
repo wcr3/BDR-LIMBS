@@ -6,6 +6,7 @@ var url = require('url');
 var path = require('path');
 var mysql = require('mysql');
 var events = require('events');
+var querystring = require('querystring');
 
 var router_lib = require('../shared/router_lib');
 
@@ -40,13 +41,19 @@ module.exports = function(req, res) {
             return true;
         }
     }
-    else if ((req_url.pathname.split('/')[1]) === 'retrieve') {
+    else if ((req_url.pathname.split('/')[1]) === 'query') {
         if (!db_connected) {
             res.writeHead(500, "SQL Database not connected.");
             res.end();
             return true;
         }
-        con.query('SELECT * FROM sakila.actor', function(err, results) {
+        var q = querystring.parse(req_url.search.slice(1)).query;
+        if (!q) {
+            res.writeHead(400, "No SQL query supplied");
+            res.end();
+            return true;
+        }
+        con.query(q, function(err, results) {
             if (err) {
                 console.log(err);
                 res.writeHead(500, "SQL Query Failed.");

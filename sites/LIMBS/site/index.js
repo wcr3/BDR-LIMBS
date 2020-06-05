@@ -1,10 +1,10 @@
 /**
- * Retreives data from the database at the given table and calls the given function with it (as the first argument)
- * @param {string} table - The name of the table
+ * Makes a request to perform a SQL query and calls the given function with the returned data (as the first argument)
+ * @param {string} query - The SQL query to execute
  * @param {function} func - The function to call with the data
  * @param {...*} funcArgs - The rest of the arguments for the function
  */
-function get_data(table, func, ...funcArgs) {
+function exec_query(query, func, ...funcArgs) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
@@ -16,7 +16,7 @@ function get_data(table, func, ...funcArgs) {
             }
         }
     };
-    xhttp.open("GET", window.location.protocol + '//' + window.location.host + "/retrieve/" + table);
+    xhttp.open("GET", window.location.protocol + '//' + window.location.host + "/query?query=" + encodeURIComponent(query));
     xhttp.send();
 }
 
@@ -41,3 +41,5 @@ function build_table(objs, id) {
     tbl_str += "</table>";
     document.getElementById(id).innerHTML = tbl_str;
 }
+
+window.onload = () => {exec_query("SELECT first_name, last_name FROM sakila.actor", build_table, "item_tbl")};
