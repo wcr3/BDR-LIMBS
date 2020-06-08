@@ -24,15 +24,16 @@ function exec_query(query) {
 }
 
 /**
-* Builds an html table given an array of objects and sets it as a child to the given <div>
-* @param {Array.<Object>} objs - The data to put on the table
-* @param {string} id - The id of the <div>
-*/
-function build_table(objs, id) {
+ * Builds a table of items and sets it as a child to the given <div>
+ * @param {Array.<Object>} objs - The data to put on the table
+ * @param {string} id - The id of the <div>
+ * @param {Array.<string>} keys - An array of keys corresponding to the columns of the table
+ */
+function build_item_table(objs, id, keys) {
     var table = document.createElement('table');
     var row = document.createElement('tr');;
     var cell;
-    Object.keys(objs[0]).forEach((key) => {
+    keys.forEach((key) => {
         cell = document.createElement('th');
         cell.innerHTML = key;
         row.appendChild(cell);
@@ -41,9 +42,9 @@ function build_table(objs, id) {
     objs.forEach((obj) => {
         row = document.createElement('tr');
         row.onclick = item_modal(obj.item_id);
-        Object.values(obj).forEach((data) => {
+        keys.forEach((key) => {
             cell = document.createElement('td');
-            cell.innerHTML = data;
+            cell.innerHTML = obj.key;
             row.appendChild(cell);
         });
         table.appendChild(row);
@@ -52,10 +53,10 @@ function build_table(objs, id) {
 }
 
 /**
-* Generates a callback function to create a modal popup with info about the item with the given id
-* @param {number} id - The item_id of the item to report
-* @returns {function} The callback function to generate the modal
-*/
+ * Generates a callback function to create a modal popup with info about the item with the given id
+ * @param {number} id - The item_id of the item to report
+ * @returns {function} The callback function to generate the modal
+ */
 function item_modal(id) {
     return async function() {
         try {
@@ -66,6 +67,7 @@ function item_modal(id) {
             modal.appendChild(el);
             el = document.createElement('h2');
             el.innerHTML = data.part_number; 
+            modal.appendChild(el);
         }
         catch (err) {
             console.error(err);
@@ -76,7 +78,7 @@ function item_modal(id) {
 
 window.onload = async function() {
     try {
-        build_table(await exec_query('SELECT first_name, last_name FROM sakila.actor'), 'item_tbl');
+        build_item_table(await exec_query('SELECT * FROM bdr_limbs.items'), 'item_tbl', ['item_name', 'part_number', 'item_link']);
     }
     catch (err) {
         console.error(err);
