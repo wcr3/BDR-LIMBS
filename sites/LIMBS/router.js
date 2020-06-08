@@ -68,7 +68,7 @@ module.exports = function(req, res) {
     }
     else if (path.extname(req_url.pathname) !== '') {
         if ((f_stream = router_lib.get_file(path.join(__dirname, 'site', req_url.pathname))) || 
-                (f_stream = router_lib.get_file(path.resolve(path.join('..', 'shared', 'assets', req_url.pathname))))) {
+                (f_stream = router_lib.get_file(path.resolve(path.join(__dirname, '..', 'shared', 'assets', req_url.pathname))))) {
             router_lib.send_success(res, f_stream, router_lib.HTTP_CONT_TYPE[path.extname(req_url.pathname)]);
             return true;
         }

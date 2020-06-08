@@ -30,6 +30,7 @@ const HTTP_CONT_TYPE = module.exports.HTTP_CONT_TYPE = {
     '.html': 'text/html',
     '.ico': 'image/x-icon',
     '.js': 'text/javascript',
+    '.css': 'text/css'
 };
 
 /**
