@@ -87,7 +87,7 @@ class SiteRouter {
             dir = fs.opendirSync(path.join(__dirname, this.path));
             this.site_routes = {};
             var site;
-            while (((site = dir.readSync()) != null) && (site.name !== 'shared')) {
+            while (((site = dir.readSync()) != null) && (site.name !== 'shared' )) {
                 if (site.isDirectory()) {
                     var mod_path = path.join(__dirname, this.path, site.name, 'router');
                     this.site_routes[site.name.toLowerCase()] = require(path.join(__dirname, this.path, site.name, 'router'));
