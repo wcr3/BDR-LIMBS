@@ -1,0 +1,3 @@
+[submodule "BDR-SITES"]
+	path = BDR-SITES
+	url = https://github.com/wcr3/BDR-SITES
