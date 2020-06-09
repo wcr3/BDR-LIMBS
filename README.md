@@ -1,4 +1,4 @@
-# BDR-site_router - A Simple Server Routing System for Modular Sites
+# BDR-site_router - A Server Routing System for Modular Sites
 
 ## Summary
 The intention of this project is to build an inventory management platform BDR in hopes of vastly decreasing the time/money spent looking for tools and parts.  Future plans include automated BOM creation, integration with design files and integration with Project Management materials.
