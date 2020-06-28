@@ -3,20 +3,9 @@
  * @module site_router 
  */
 
-var url = require('url');
 var fs = require('fs');
+var fs_promises = require('fs').promises;
 var path = require('path');
-
-/**
- * Collection of HTTP Content-Types (MIME Types) based on file extension
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types|MDN Web Docs}
- * @constant {Object.<string, string>}
- */
-const http_content_types = {
-    '.html': 'text/html',
-    '.ico': 'image/x-icon',
-    '.js': 'text/javascript',
-};
 
 /** 
  * Class holding result of route with header data
@@ -56,24 +45,52 @@ class SiteRouter {
      * Top-level routing function
      * @param {import('http').IncomingMessage} req - The request made to the server
      * @param {import('http').ServerResponse} res - The server response
+     * @returns {Promise} Resolves on completed routing.  Rejects otherwise.
      */
-    route(req, res) {
+    async route(req, res) {
         var req_url = new URL(req.url, 'http://' + req.headers.host);
         console.log('Request made for URL: ' + req.url + '. This has basename ' + path.basename(req_url.pathname) + ' and extension ' + path.extname(req_url.pathname));
-        var site_name = ((req_url.hostname.split('.'))[0]).toLowerCase();
-        if (site_name !== 'localhost') {  // TO BE CHANGED
-            if (this.site_routes[site_name]) {
-                if (!this.site_routes[site_name](req, res)) {
-                    send_file(res, server_error(404, 'Site ' + site_name + ' failed to route.'));
+        try {
+            var site_name = ((req_url.hostname.split('.'))[0]).toLowerCase();
+            if (site_name !== 'localhost') {  // TO BE CHANGED
+                if (this.site_routes[site_name]) {
+                    await this.site_routes[site_name](req, res);
+                    return;
+                }
+                throw new Error('404 Site ' +  site_name + ' does not exist.');
+            }
+            throw new Error('501 Index page not implemented');
+        } 
+        catch (err) {
+            console.error(err);
+            send_file(res, server_error(err.message.substring(0,3), err.message.substring(4)));  // I don't really like this and would prefer for isolation between the server and the sites
+                                                                                                   // This restricts what structure Errors the sites can throw
+        }
+    }
+
+    /**
+     * Asynchronously builts a SiteRouter
+     * @param {string} site_path The relative path to the directory of sites
+     * @returns {Promise<SiteRouter>} Resolves to the SiteRouter, rejects on failure to parse sites
+     */
+    static async build_router(site_path) {
+        var router = new SiteRouter(site_path);
+        var dir = null;
+        try {
+            dir = await fs_promises.opendir(path.join(__dirname, site_path));
+            for await (const site of dir) {
+                if (site.isDirectory() && site.name !== 'shared') {
+                    router.site_routes[site.name.toLowerCase()] = require(path.join(__dirname, router.path, site.name, 'router'));
                 }
             }
-            else {
-                send_file(res, server_error(404, 'Site ' + site_name + ' does not exist.'));
+        }
+        catch (err) {
+            if (dir) {
+                await dir.close();
             }
+            SiteRouter.route = (req, res) => {send_file(res, server_error(500, 'Failed to load sites at path' + this.path))};
         }
-        else {
-            send_file(res, server_error(501, 'Index page not implemented.'))
-        }
+        return router;
     }
 
     /**
@@ -82,25 +99,6 @@ class SiteRouter {
      */
     constructor(site_path) {
         this.path = site_path;
-        var dir = null;
-        try {
-            dir = fs.opendirSync(path.join(__dirname, this.path));
-            this.site_routes = {};
-            var site;
-            while (((site = dir.readSync()) != null) && (site.name !== 'shared' )) {
-                if (site.isDirectory()) {
-                    var mod_path = path.join(__dirname, this.path, site.name, 'router');
-                    this.site_routes[site.name.toLowerCase()] = require(path.join(__dirname, this.path, site.name, 'router'));
-                }
-            }
-            dir.closeSync();
-        } catch (err) {
-            console.error(err);
-            if (dir) {
-                dir.closeSync();
-            }
-            this.route = (req, res) => {send_file(res, server_error(500, 'Failed to load sites at path' + this.path))};
-        }
     }
 }
 
@@ -122,7 +120,7 @@ function send_file(res, route_result) {
  */
 function server_error(status, status_message) {
     return new RouteResult(
-        fs.createReadStream(path.join(__dirname, 'error', status.toString() + '.html')),
+        fs.createReadStream(path.join(__dirname, 'error', status + '.html')),
         status,
         status_message,
         {
@@ -130,65 +128,5 @@ function server_error(status, status_message) {
         }
     );
 }
-
-/* The following three functions need to be removed */
-/**
- * Routes urls requested from the server
- * @param {import('http').ServerResponse} res - The server response
- * @param {string} r_url - The url path requested
- * @returns {?import('fs').ReadStream} A ReadStream for the page HTML file, or for the 404 page if not found
- */
-function route_url(res, r_url) {
-    var ret;
-    try {
-        fs.accessSync(path.join(__dirname, r_url), fs.constants.R_OK);
-        ret = fs.createReadStream(path.join(__dirname, r_url, 'index.html')); // temporary.  will likely be changed.
-        res.writeHead(200, {'Content-Type': 'text/html'});
-    } catch (err) {
-        console.log(err);
-        ret = fs.createReadStream(path.join(__dirname, '404.html'));
-        res.writeHead(404, err, {'Content-Type': 'text/html'});
-    }
-    return ret;
-}
-
-/**
- * Routes static files requested from the server
- * @param {import('http').ServerResponse} res - The server response
- * @param {string} f_path - The path to the static file
- * @returns {?import('fs').ReadStream} A ReadStream for the given file, or null if it does not exist.
- */
-function route_static(res, f_path) {
-    var ret;
-    try {
-        fs.accessSync(path.join(__dirname, f_path), fs.constants.R_OK);
-        ret = fs.createReadStream(path.join(__dirname, f_path));
-        res.writeHead(200, {'Content-Type': http_content_types[path.extname(f_path)]});
-    } catch (err) {
-        console.log(err);
-        ret = null;
-        res.writeHead(404, err);
-    }
-    return ret;
-}
-
-/** 
- * Top-level routing function for HTTP Server
- * @param {import('http').IncomingMessage} req - The request made to the server
- * @param {import('http').ServerResponse} res - The server response
- */
-function route_basic(req, res) {
-    var req_url = new URL(req.url, 'http://' + req.headers.host);
-    console.log('Request made for URL: ' + req.url + '. This has basename ' + path.basename(req_url.pathname) + ' and extension ' + path.extname(req_url.pathname));
-    var loc = req_url.pathname;//path.join(module.exports.site, req_url.pathname);
-    var f_rstream = path.extname(loc) === "" ? route_url(res, loc) : route_static(res, loc);
-    if (f_rstream) {
-        f_rstream.pipe(res);
-    }
-    else {
-        res.end();
-    }
-}
-
 
 module.exports = SiteRouter;

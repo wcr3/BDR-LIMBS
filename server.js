@@ -1,6 +1,9 @@
 var http = require('http');
 
 var site_router = require('./site_router');
-var router = new site_router('./BDR-SITES');
+//var router = new site_router('./BDR-SITES');
 
-http.createServer((res, req) => {router.route(res, req)}).listen(8080);
+(async () => {
+    var router = await site_router.build_router('./BDR-SITES');
+    http.createServer((req, res) => {router.route(req, res)}).listen(8080);
+})();
